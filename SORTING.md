@@ -254,13 +254,8 @@ const AllAppsPage = () => {
             </option>
             <option value="rating-desc">Ratings: High - Low</option>
             <option value="rating-asc">Ratings: Low - High</option>
-            <option value="size-desc">Size: High -
-```
+            <option value="size-desc">Size: High -Low</option> <option value="size-asc">Size: Low - High</option> <option value="downloads-desc">Downloads: High - Low</option> <option value="downloads-asc">Downloads: Low - High</option> </select> </div> </div>
 
-
-Low</option> <option value="size-asc">Size: Low - High</option> <option value="downloads-desc">Downloads: High - Low</option> <option value="downloads-asc">Downloads: Low - High</option> </select> </div> </div>
-
-```
   {/* Apps Grid */}
   <div className="w-11/12 mx-auto grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 my-10 gap-5">
     {apps.length === 0 ? (
@@ -303,18 +298,9 @@ Low</option> <option value="size-asc">Size: Low - High</option> <option value="d
     )}
   </div>
 </div>
-```
-
 );
 };
 
 export default AllAppsPage;
 
-```
-
----
-
-## Conclusion
-
-This setup provides pagination and sorting functionality for a React frontend connected to a Node.js backend. It allows users to dynamically filter, sort, and navigate through large datasets of applications efficiently.
 ```
