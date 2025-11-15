@@ -175,5 +175,3 @@ useEffect(() => {
 
 * **Debounced search**: Introduce a delay before making a request after the user stops typing (useful for preventing multiple API calls while typing).
 * **Clear Search**: Add a button to clear the search input and show all results.
-
-```
