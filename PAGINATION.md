@@ -1,10 +1,3 @@
-
-Here is a **clean, beautiful, fully-explained Markdown (.md) documentation** for your **React Pagination + Backend Pagination API**.
-
-You can copy & paste directly into a `.md` file.
-
----
-
 # 📄 **React + Node.js Pagination Documentation**
 
 This document explains how the **backend pagination API** and the **React frontend pagination UI** work together to fetch paginated data seamlessly.
