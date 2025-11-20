@@ -1,201 +1,239 @@
-# 🚀 Initial Project Setup with React, Vite, Tailwind CSS, DaisyUI, React Router, and Custom Font
 
-## Step 1: Create a New React Project with Vite
+Here is a **clean, beautiful, fully-explained Markdown (.md) documentation** for your **React Pagination + Backend Pagination API**.
 
-Start by creating a new React project using Vite:
-
-```bash
-npm create vite@latest my-project
-```
-
-1. Replace `my-project` with your preferred project name.
-2. Select **React** as the framework when prompted.
-
-🎉 Your new React project is ready!
+You can copy & paste directly into a `.md` file.
 
 ---
 
-## Step 2: Install Tailwind CSS and Vite Plugin
+# 📄 **React + Node.js Pagination Documentation**
 
-Navigate into your project folder:
-
-```bash
-cd my-project
-```
-
-Install **Tailwind CSS** and the **@tailwindcss/vite** plugin:
-
-```bash
-npm install tailwindcss @tailwindcss/vite
-```
-
-⚡ Tailwind is now installed and ready for use!
+This document explains how the **backend pagination API** and the **React frontend pagination UI** work together to fetch paginated data seamlessly.
 
 ---
 
-## Step 3: Install DaisyUI
+# 🚀 **Backend Pagination API**
 
-DaisyUI is a Tailwind CSS plugin that provides pre-styled components. Install it with the following command:
+### **Endpoint:**
 
-```bash
-npm i -D daisyui@latest
+```
+GET /apps?limit=10&skip=0
 ```
 
-✨ DaisyUI is now installed for quick styling!
+### **Description:**
+
+This API returns **paginated app data**, excluding heavy fields (`description`, `ratings`).
+It also returns the **total count**, allowing the frontend to calculate total pages.
 
 ---
 
-## Step 4: Set Up Tailwind and DaisyUI in `index.css`
+## ✅ **Backend Code**
 
-To keep everything simple and follow your preference of using just `@import "tailwindcss";`, you can import **Tailwind CSS** and **DaisyUI** directly in the **`index.css`** file.
+```javascript
+app.get("/apps", async (req, res) => {
+  try {
+    const { limit = 0, skip = 0 } = req.query;
 
-1. In your **`index.css`**, just add this line to import **Tailwind CSS** and DaisyUI.
+    const apps = await appsCollection
+      .find()
+      .limit(parseInt(limit))
+      .skip(parseInt(skip))
+      .project({ description: 0, ratings: 0 })
+      .toArray();
 
-```css
-/* src/index.css */
-@import "tailwindcss"; /* Import Tailwind CSS */
-@import "daisyui"; /* Import DaisyUI Plugin */
+    const count = await appsCollection.countDocuments();
+
+    res.send({ apps, total: count });
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({ error: "Internal Server Error" });
+  }
+});
 ```
-
-🌈 Tailwind and DaisyUI are ready for use in your styles!
 
 ---
 
-## Step 5: Add Custom Font - Urbanist
+## 📝 **How It Works**
 
-To add a custom font, **Urbanist**, follow these steps:
+| Query Param | Meaning                  | Example                          |
+| ----------- | ------------------------ | -------------------------------- |
+| `limit`     | Number of items per page | `?limit=10`                      |
+| `skip`      | How many items to skip   | `?skip=20` (skip first 20 items) |
 
-1. **Import the font** from Google Fonts.
-2. **Apply the font** globally to the body of your app.
+### 📌 Example Request
 
-In your **`index.css`**, add the following:
+```
+/apps?limit=10&skip=30
+```
 
-```css
-/* src/index.css */
+➡ Returns **10 apps**, starting from the **31st** app.
 
-/* Import Urbanist font from Google Fonts */
-@import url('https://fonts.googleapis.com/css2?family=Urbanist:ital,wght@0,100..900;1,100..900&display=swap');
+### 📌 Example Response
 
-/* Apply the font to the body */
-body {
-    font-family: "Urbanist", sans-serif;
-    font-optical-sizing: auto;
-    font-style: normal;
+```json
+{
+  "apps": [ ...10 items... ],
+  "total": 128
 }
 ```
 
-🖋️ **Urbanist** font is now applied to your app for a sleek and modern look!
+---
+
+# 🎨 **Frontend React Pagination**
+
+This is the **React page that fetches paginated data** and renders a page selector (Prev / Next Buttons + Page Numbers).
 
 ---
 
-## Step 6: Install React Router
+## 🧩 **State Variables**
 
-To enable routing in your app, install **React Router**:
+| State         | Purpose                                              |
+| ------------- | ---------------------------------------------------- |
+| `apps`        | Stores the apps fetched from backend                 |
+| `totalapps`   | Total number of apps from the backend                |
+| `totalpages`  | Total pages → computed as `Math.ceil(total / limit)` |
+| `currentPage` | Current page index                                   |
+| `limit`       | Items per page (set to 10)                           |
 
-```bash
-npm i react-router
+---
+
+## 🧠 **Pagination Logic**
+
+Backend Request:
+
+```
+/apps?limit=10&skip=currentPage * 10
 ```
 
-🛣️ Routing is now set up and ready for use!
+If `currentPage = 3` →
+`skip = 3 × 10 = 30`
 
 ---
 
-## Step 7: Set Up Routing
-
-Create a `routes` folder inside the `src` directory and inside it, create a file called `routes.jsx`. This will hold the routing configuration for your app.
+## ✅ **Frontend Code**
 
 ```javascript
-// src/routes/routes.jsx
-import { createBrowserRouter } from "react-router";
+import { DiVisualstudio } from "react-icons/di";
+import AppCard from "../ui/AppCard";
+import { useEffect, useState } from "react";
 
-export const router = createBrowserRouter([
-  {
-    path: "/",
-    element: <div>Hello World</div>,
-  },
-]);
-```
+const AllAppsPage = () => {
+  const [apps, setApps] = useState([]);
+  const [totalapps, setTotalapp] = useState(0);
+  const [totalpages, setTotalpages] = useState(0);
+  const [currentPage, setCurrentPage] = useState(0);
 
-🧭 Your routing structure is set!
+  const limit = 10;
 
----
+  useEffect(() => {
+    fetch(
+      `http://localhost:5000/apps?limit=${limit}&skip=${currentPage * limit}`
+    )
+      .then((res) => res.json())
+      .then((data) => {
+        setApps(data.apps);
+        setTotalapp(data.total);
+        setTotalpages(Math.ceil(data.total / limit));
+      });
+  }, [currentPage]);
 
-## Step 8: Update `main.jsx` to Use RouterProvider
-
-Next, open the `main.jsx` file and wrap your app in the `RouterProvider` component to enable routing.
-
-```javascript
-// src/main.jsx
-import React from "react";
-import ReactDOM from "react-dom/client";
-import { RouterProvider } from "react-router";
-import { router } from "./routes/routes";
-import "./index.css";  // Tailwind CSS, DaisyUI, and Urbanist font are imported here
-
-ReactDOM.createRoot(document.getElementById("root")).render(
-  <React.StrictMode>
-    <RouterProvider router={router} />
-  </React.StrictMode>
-);
-```
-
-🔌 Routing is now integrated into your app!
-
----
-
-## Step 9: Run the Development Server
-
-Finally, run the development server to start your app:
-
-```bash
-npm run dev
-```
-
-🎉 Visit `http://localhost:port` in your browser to see the app in action!
-
----
-
-## Step 10: (Optional) Install React Icons for Adding Icons
-
-To add icons to your app, you can install **React Icons**:
-
-```bash
-npm install react-icons
-```
-
-Then, use the icons in your app like this:
-
-```javascript
-import { FaReact } from 'react-icons/fa';
-
-function App() {
   return (
     <div>
-      <h1>Welcome to your React App!</h1>
-      <FaReact size={50} color="#61DAFB" />
+      <title>All Apps | Hero Apps</title>
+
+      {/* Header */}
+      <div className="py-16">
+        <h2 className="text-4xl font-bold text-center text-primary flex justify-center gap-3">
+          Our All Applications
+          <DiVisualstudio size={48} className="text-secondary" />
+        </h2>
+        <p className="text-center text-gray-400">
+          Explore All Apps on the Market developed by us. We code for Millions
+        </p>
+      </div>
+
+      {/* Count */}
+      <div className="w-11/12 mx-auto mt-10">
+        <h2 className="text-lg underline font-bold">
+          ({totalapps}) Apps Found
+        </h2>
+      </div>
+
+      {/* Apps Grid */}
+      <div className="w-11/12 mx-auto grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 my-10 gap-5">
+        {apps.length === 0 ? (
+          <div className="col-span-full text-center py-10 space-y-10">
+            <h2 className="text-6xl font-semibold opacity-60">No Apps Found</h2>
+            <button className="btn btn-primary">Show All Apps</button>
+          </div>
+        ) : (
+          apps.map((app) => <AppCard key={app.id} app={app} />)
+        )}
+      </div>
+
+      {/* Pagination */}
+      <div className="flex justify-center flex-wrap gap-3 py-5">
+        {currentPage > 0 && (
+          <button
+            onClick={() => setCurrentPage(currentPage - 1)}
+            className="btn"
+          >
+            Prev
+          </button>
+        )}
+
+        {[...Array(totalpages).keys()].map((i) => (
+          <button
+            onClick={() => setCurrentPage(i)}
+            className={`btn ${i === currentPage && "btn-primary"}`}
+          >
+            {i}
+          </button>
+        ))}
+
+        {currentPage < totalpages - 1 && (
+          <button
+            onClick={() => setCurrentPage(currentPage + 1)}
+            className="btn"
+          >
+            Next
+          </button>
+        )}
+      </div>
     </div>
   );
-}
-```
+};
 
-🎨 **React Icons** are now ready to use for a more dynamic interface!
+export default AllAppsPage;
+```
 
 ---
 
-## Step 11: Run the Development Server Again
+# 📘 **Flow Summary**
 
-Re-run the development server to see all the changes:
+### ✔ Backend
 
-```bash
-npm run dev
-```
+* Applies **limit & skip**
+* Removes heavy fields using `.project()`
+* Returns **apps + total count**
 
-🚀 Visit `http://localhost:port` to see your icons and other changes in action!
+### ✔ Frontend
+
+* Calculates pages using `total / limit`
+* Uses `currentPage * limit` to compute skip
+* Renders pagination buttons dynamically
+* Updates page using `setCurrentPage()`
 
 ---
 
-## Summary
+# 🎯 Final Result
 
-🎉 **Congratulations!** You've successfully set up a React project using **Vite**, **Tailwind CSS**, **DaisyUI**, **React Router**, and a **custom font** (Urbanist). Your app now has routing, custom styling, and dynamic icons ready to go.
+A fully functional **server-side pagination system** where:
 
-Enjoy building your app! 🎨💻
+* API handles efficient database pagination
+* React UI displays real page numbers
+* Users can navigate with **Prev / Next / Numbered pages**
+* Clean, fast, scalable pagination system
+
+---
+
+If you want, I can also make a **diagram**, **flowchart**, or **animated GIF explanation** for this pagination system.
